@@ -1,0 +1,68 @@
+// Neon: use pooled DATABASE_URL for the app; DIRECT_URL for migrations (Neon docs).
+// https://www.prisma.io/docs/orm/overview/databases/neon
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+/// Cached Steam profile / login identity (avoid hitting Steam for every page load).
+model SteamUser {
+  id          String   @id @default(cuid())
+  steamId64   String   @unique
+  displayName String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  claimedLaunches TokenLaunch[]
+}
+
+/// Cached store metadata for a Steam app (reduces Steam/Web scraping churn).
+model SteamGame {
+  id           String   @id @default(cuid())
+  steamAppId   Int      @unique
+  name         String
+  /// Raw JSON blob for extra fields (genres, capsule URLs, etc.) without schema churn.
+  metadataJson Json?
+  lastSyncedAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  launch TokenLaunch?
+}
+
+enum LaunchStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+/// One mint per Steam app; Solana details cached so UI/listings avoid RPC.
+model TokenLaunch {
+  id        String @id @default(cuid())
+  steamAppId Int   @unique
+
+  mintAddress     String? @unique
+  /// Signature of the create/launch tx once confirmed.
+  launchSignature String?
+  status          LaunchStatus @default(PENDING)
+
+  /// Optional: vanity / metadata URIs you store after launch.
+  metadataUri String?
+
+  /// Fee-sharing / claim workflow: platform bps when claiming (1–9999; creator gets remainder).
+  feeSharesPlatformBps Int? @default(500)
+  claimedAt            DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  game    SteamGame  @relation(fields: [steamAppId], references: [steamAppId])
+  claimer SteamUser? @relation(fields: [claimerId], references: [id])
+  claimerId String?
+}

@@ -1,0 +1,26 @@
+{
+  "name": "steam-verify",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "npm run db:generate",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "db:generate": "npm exec --workspace=@steam-verify/db -- prisma generate",
+    "db:migrate": "npm exec --workspace=@steam-verify/db -- prisma migrate dev",
+    "db:push": "npm exec --workspace=@steam-verify/db -- prisma db push",
+    "db:studio": "npm exec --workspace=@steam-verify/db -- prisma studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
