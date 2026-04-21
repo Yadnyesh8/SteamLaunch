@@ -1,4 +1,4 @@
-# 🎮 Steam-Verify
+# 🎮 SteamLaunch
 
 **Launch tokens. Raise funds. Build trust.**
 
